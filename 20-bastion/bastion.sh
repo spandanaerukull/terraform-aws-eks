@@ -37,3 +37,10 @@ ln -s /opt/kubectx/kubens /usr/local/bin/kubens
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 chmod 700 get_helm.sh
 ./get_helm.sh
+
+# what we have installed here 
+# docker
+# eksctl
+# kubectl
+# kubectx / kubens
+# we are installing all here because this is our bastion host to manage the EKS cluster and we are installing in the private subnet so we can access the cluster from here securely

@@ -1,0 +1,92 @@
+pipeline {
+    agent  {
+        label 'AGENT-1'
+    }
+    environment { 
+        appVersion = ''
+        REGION = "us-east-1"
+        ACC_ID = "122610517295"
+        PROJECT = "roboshop"
+    }
+    options {
+        timeout(time: 30, unit: 'MINUTES') 
+        disableConcurrentBuilds()
+        ansiColor('xterm')
+    }
+    /* parameters {
+        string(name: 'PERSON', defaultValue: 'Mr Jenkins', description: 'Who should I say hello to?')
+        text(name: 'BIOGRAPHY', defaultValue: '', description: 'Enter some information about the person')
+        booleanParam(name: 'TOGGLE', defaultValue: true, description: 'Toggle this value')
+        choice(name: 'CHOICE', choices: ['One', 'Two', 'Three'], description: 'Pick something')
+        password(name: 'PASSWORD', defaultValue: 'SECRET', description: 'Enter a password') 
+    } */
+    // Build
+    stages {
+        stage('init') {
+            steps {
+                script {
+                    withAWS(credentials: 'aws-creds', region: 'us-east-1') { // this block allows us to execute AWS CLI commands using the specified credentials and region, it is useful for tasks such as authenticating with AWS services, managing resources, or in this case, initializing Terraform in the 00-vpc directory. By wrapping the Terraform init command within the withAWS block, we ensure that the necessary AWS credentials are available for authentication when Terraform interacts with AWS resources during the initialization process.
+                        sh """
+                            cd 00-vpc
+                            terraform init -reconfigure 
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('plan') {
+            steps {
+                script {
+                    withAWS(credentials: 'aws-creds', region: 'us-east-1') { // this block allows us to execute AWS CLI commands using the specified credentials and region, it is useful for tasks such as authenticating with AWS services, managing resources, or in this case, planning Terraform changes in the 00-vpc directory. By wrapping the Terraform plan command within the withAWS block, we ensure that the necessary AWS credentials are available for authentication when Terraform interacts with AWS resources during the planning process.
+                        sh """
+                            cd 00-vpc
+                            terraform plan
+                        """
+                    }
+                }
+            }
+        }
+        stage('apply') {
+            input {
+                message "Should we continue?"
+                ok "Yes, we should."
+                submitter "alice,bob"
+            }
+            steps {
+                script {
+                    withAWS(credentials: 'aws-creds', region: 'us-east-1') { // this block allows us to execute AWS CLI commands using the specified credentials and region, it is useful for tasks such as authenticating with AWS services, managing resources, or in this case, applying Terraform changes in the 00-vpc directory. By wrapping the Terraform apply command within the withAWS block, we ensure that the necessary AWS credentials are available for authentication when Terraform interacts with AWS resources during the apply process.
+                        sh """
+                            cd 00-vpc
+                            terraform apply -auto-approve
+                        """
+                    }
+                }
+            }
+        }
+        // Down stream job
+        stage('Trigger SG') {
+            steps {
+                script {
+                    build job: '10-sg', 
+                      propagate: false,  // even SG fails VPC will not be effected
+                      wait: false // VPC will not wait for SG pipeline completion
+                }
+            }
+        }
+        
+    }
+
+    post { 
+        always { 
+            echo 'I will always say Hello again!'
+            deleteDir()
+        }
+        success { 
+            echo 'Hello Success'
+        }
+        failure { 
+            echo 'Hello Failure'
+        }
+    }
+}

@@ -44,9 +44,9 @@ module "eks" {
       desired_size = 2
     } */
     # iam_role_additional_policies = {
-    #     AmazonEBS = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
-    #     AmazonEFS = "arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy"
-    #     AmazonEKSLoad = "arn:aws:iam::aws:policy/AmazonEKSLoadBalancingPolicy"
+    #     AmazonEBS = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy" # this is the policy for ebs csi driver to work with eks nodes and acessing them
+    #     AmazonEFS = "arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy" # this is the policy for efs csi driver to work with eks nodes and acessing them
+    #     AmazonEKSLoad = "arn:aws:iam::aws:policy/AmazonEKSLoadBalancingPolicy" # this is the policy for alb ingress controller to work with eks nodes and acessing them
     # }
     green = {
       # Starting on 1.30, AL2023 is the default AMI type for EKS managed node groups
@@ -57,7 +57,7 @@ module "eks" {
       max_size     = 10
       desired_size = 2
 
-      iam_role_additional_policies = {
+      iam_role_additional_policies = { # adding the extra policies for ebs, efs and alb load balancer to work with eks nodes and acessing them, why we need this because when we install the csi drivers for ebs and efs and alb ingress controller then those drivers need permissions to access the eks nodes and perform their operations like creating volumes, attaching volumes, creating load balancers etc. so we need to add these policies to the node group iam role to give those permissions to the drivers to work properly with the eks nodes and acessing them
         AmazonEBS = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
         AmazonEFS = "arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy"
         AmazonEKSLoad = "arn:aws:iam::aws:policy/AmazonEKSLoadBalancingPolicy"
@@ -73,10 +73,6 @@ module "eks" {
     }
   }
 
-  tags = merge(
-    local.common_tags,
-    {
-        Name = "${var.project}-${var.environment}"
-    }
-  )
+  # Top-level `tags` is not supported by this module version; set tags via the module's supported inputs
+  # (for example: cluster_tags, node_group_tags, or specific resource tags) or apply tags at resource-level.
 }
