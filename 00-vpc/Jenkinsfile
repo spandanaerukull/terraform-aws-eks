@@ -67,9 +67,9 @@ pipeline {
         // Down stream job
         stage('Trigger SG') {
             steps {
-                script {
+                script { 
                     build job: '10-sg', 
-                      propagate: false,  // even SG fails VPC will not be effected
+                      propagate: false,  // by giving this propagate even SG fails VPC will not be effected
                       wait: false // VPC will not wait for SG pipeline completion
                 }
             }
@@ -79,14 +79,14 @@ pipeline {
 
     post { 
         always { 
-            echo 'I will always say Hello again!'
+            echo 'I will always say Hello again!' // this block will always execute regardless of the build result, it is used to perform cleanup actions or any necessary steps that should be executed after every build, in this case we are deleting the workspace directory to clean up any files or artifacts generated during the build process and also printing a message to indicate that this block has been executed.
             deleteDir()
         }
         success { 
-            echo 'Hello Success'
+            echo 'Hello Success' // this block will execute only if the build is successful, it is used to perform actions that should only be executed when the build succeeds, in this case we are printing a message to indicate that the build was successful.  
         }
         failure { 
-            echo 'Hello Failure'
+            echo 'Hello Failure' // this block will execute only if the build fails, it is used to perform actions that should only be executed when the build fails, in this case we are printing a message to indicate that the build has failed.
         }
     }
 }
